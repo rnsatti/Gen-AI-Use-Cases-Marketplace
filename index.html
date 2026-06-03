@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agent Marketplace</title>
+<script src="config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#06C7CC;--teal-d:#0AA8AC;--teal-bg:#E8FAFA;
+  --navy:#000048;--indigo:#2E308E;--blue:#2F78C4;--purple:#7373D8;
+  --white:#fff;--bg:#F2F5F9;--card:#fff;
+  --border:#DDE3ED;--text:#1A1A3A;--muted:#64748B;--light:#F8FAFC;
+  --green:#1D9E5C;--amber:#D97706;--red:#DC2626;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:var(--navy);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 32px}
+.logo-text{font-size:14px;font-weight:600;color:#fff;letter-spacing:.01em}
+.phase-pill{font-size:11px;font-weight:500;color:var(--teal);background:rgba(6,199,204,.12);border:1px solid rgba(6,199,204,.25);padding:4px 12px;border-radius:20px}
+main{max-width:1200px;margin:0 auto;padding:32px 28px}
+.page-title{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+.tab-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;border-bottom:1.5px solid var(--border);padding-bottom:0}
+.tabs{display:flex;gap:0}
+.tab{padding:10px 20px;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;font-family:'DM Sans',sans-serif;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:all .15s}
+.tab:hover{color:var(--navy)}
+.tab.active{color:var(--navy);border-bottom-color:var(--teal)}
+.tab-count{font-size:11px;font-weight:500;background:var(--bg);padding:1px 7px;border-radius:10px;margin-left:6px;color:var(--muted);font-family:'DM Mono',monospace}
+.tab.active .tab-count{background:var(--teal-bg);color:var(--teal-d)}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.chip{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--muted);font-family:'DM Sans',sans-serif;transition:all .15s}
+.chip:hover{border-color:var(--teal-d);color:var(--teal-d)}
+.chip.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:10px}
+.card{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;animation:up .3s ease both}
+@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card:hover{box-shadow:0 6px 24px rgba(0,0,72,.1);border-color:var(--teal);transform:translateY(-2px)}
+.card-bar{position:absolute;top:0;left:0;right:0;height:3px;border-radius:10px 10px 0 0}
+.card-name{font-size:13px;font-weight:700;color:var(--navy);line-height:1.35;margin-bottom:5px;margin-top:4px}
+.card-desc{font-size:11.5px;color:var(--muted);line-height:1.55;margin-bottom:12px}
+.card-foot{display:flex;align-items:center;justify-content:space-between}
+.tags{display:flex;gap:4px;flex-wrap:wrap}
+.tag{font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:8px;letter-spacing:.03em;text-transform:uppercase}
+.t-active{background:#DCFCE7;color:#166534}
+.t-planned{background:#F1F5F9;color:var(--muted)}
+.t-exploring{background:#FFF7ED;color:#92400E}
+.t-pipeline{background:#EEF3FB;color:var(--indigo)}
+.t-shared{background:var(--teal-bg);color:var(--teal-d)}
+.tag-plain{font-size:9.5px;font-weight:500;padding:2px 7px;border-radius:7px;background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.card-arrow{font-size:13px;color:var(--border);font-weight:300;transition:color .15s}
+.card:hover .card-arrow{color:var(--teal)}
+/* loading */
+.loading{display:flex;align-items:center;justify-content:center;padding:60px;color:var(--muted);font-size:13px;gap:10px}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* DRAWER */
+.overlay{position:fixed;inset:0;background:rgba(0,0,48,.45);backdrop-filter:blur(2px);z-index:100;opacity:0;pointer-events:none;transition:opacity .2s;display:flex;justify-content:flex-end}
+.overlay.open{opacity:1;pointer-events:all}
+.drawer{width:420px;height:100vh;background:var(--white);overflow-y:auto;transform:translateX(20px);transition:transform .22s cubic-bezier(.4,0,.2,1);box-shadow:-4px 0 28px rgba(0,0,48,.15);display:flex;flex-direction:column}
+.drawer::-webkit-scrollbar{width:4px}
+.drawer::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.overlay.open .drawer{transform:translateX(0)}
+.d-header{padding:20px 22px 16px;border-bottom:1px solid var(--border)}
+.d-close{float:right;width:26px;height:26px;border-radius:6px;background:var(--bg);border:none;cursor:pointer;font-size:13px;color:var(--muted);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.d-close:hover{background:#FFE5E5;color:var(--red)}
+.d-back{background:none;border:none;cursor:pointer;font-size:12px;font-weight:600;color:var(--teal-d);font-family:'DM Sans',sans-serif;padding:4px 8px;border-radius:6px;transition:all .15s;display:flex;align-items:center;gap:4px}
+.d-back:hover{background:var(--teal-bg)}
+.d-breadcrumb{font-size:10.5px;color:var(--muted);margin-bottom:6px;min-height:14px}
+.d-breadcrumb span{color:var(--teal-d);cursor:pointer}
+.d-breadcrumb span:hover{text-decoration:underline}
+.d-type{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;display:block}
+.d-title{font-size:17px;font-weight:700;color:var(--navy);line-height:1.35;margin-bottom:8px}
+.d-desc{font-size:12.5px;color:var(--muted);line-height:1.65}
+.d-body{padding:18px 22px 32px;flex:1}
+.d-sec{margin-bottom:20px}
+.d-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+.io-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.io-box{background:var(--light);border:1.5px solid var(--border);border-radius:8px;padding:12px}
+.io-box-label{font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.io-item{font-size:11.5px;color:var(--text);line-height:1.45;padding:2px 0;border-left:2px solid var(--border);padding-left:8px;margin-top:5px}
+.io-item.in{border-color:var(--indigo)}
+.io-item.out{border-color:var(--green)}
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:10px;padding:10px 0}
+.step-n{width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'DM Mono',monospace;margin-top:1px}
+.step-n.sp{background:linear-gradient(135deg,var(--teal-d),var(--indigo))}
+.step-name{font-size:12.5px;font-weight:600;color:var(--navy);margin-bottom:2px}
+.step-desc{font-size:11.5px;color:var(--muted);line-height:1.5}
+.step+.step{border-top:1px solid var(--border)}
+.uc-agents{display:flex;flex-direction:column;gap:5px}
+.uca{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;background:var(--light);border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s}
+.uca:hover{border-color:var(--teal);background:var(--teal-bg)}
+.uca-num{width:20px;height:20px;border-radius:50%;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'DM Mono',monospace;margin-top:1px}
+.uca-name{font-size:12.5px;font-weight:600;color:var(--navy);margin-bottom:1px}
+.uca-sd{font-size:11px;color:var(--muted);line-height:1.4}
+.uca-arrow{margin-left:auto;font-size:13px;color:var(--border);align-self:center}
+.uca:hover .uca-arrow{color:var(--teal)}
+.used-chips{display:flex;gap:5px;flex-wrap:wrap}
+.used-chip{padding:5px 12px;border-radius:16px;font-size:12px;font-weight:500;background:var(--light);border:1.5px solid var(--border);color:var(--text);cursor:pointer;transition:all .15s}
+.used-chip:hover{border-color:var(--teal);color:var(--teal-d);background:var(--teal-bg)}
+.out-box{background:var(--light);border:1.5px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12.5px;color:var(--text);line-height:1.6}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-text">AI Agent Marketplace</div>
+  <div class="phase-pill">Phase 1 · In Progress</div>
+</header>
+
+<main>
+  <div class="page-title" id="cTitle">Use Cases</div>
+  <div class="page-sub" id="cSub">Loading...</div>
+  <div class="tab-row">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('activities',this)">Use Cases <span class="tab-count" id="tcAct">—</span></button>
+      <button class="tab" onclick="switchTab('agents',this)">Agents <span class="tab-count" id="tcAg">—</span></button>
+    </div>
+  </div>
+  <div class="filter-row" id="filterRow"></div>
+  <div class="grid" id="grid"><div class="loading"><div class="spinner"></div> Loading...</div></div>
+</main>
+
+<!-- DRAWER -->
+<div class="overlay" id="overlay" onclick="maybeClose(event)">
+  <div class="drawer" id="drawer">
+    <div class="d-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <button class="d-back" id="dBack" onclick="navBack()" style="display:none">&#x2190; Back</button>
+        <div style="flex:1"></div>
+        <button class="d-close" onclick="closeDrawer()">&#x2715;</button>
+      </div>
+      <div class="d-breadcrumb" id="dBreadcrumb"></div>
+      <span class="d-type" id="dType"></span>
+      <div class="d-title" id="dTitle"></div>
+      <div class="d-desc" id="dDesc"></div>
+    </div>
+    <div class="d-body" id="dBody"></div>
+  </div>
+</div>
+
+<script>
+// ── STATE ────────────────────────────────────────────────────
+let UC = [], AG = [], STEPS = {};
+let curTab = 'activities', curFilter = 'all';
+let navStack = [];
+
+const SC = {
+  active:    {cls:'t-active',   l:'In Progress'},
+  planned:   {cls:'t-planned',  l:'Planned'},
+  exploring: {cls:'t-exploring',l:'Exploring'},
+  pipeline:  {cls:'t-pipeline', l:'In Pipeline'}
+};
+
+const ACT_FILTERS = [
+  {v:'all', l:'All'},
+  {v:'p1',  l:'Test Case Generation'},
+  {v:'p2',  l:'Test Data Generation'},
+  {v:'defect',l:'PDI RCA'},
+  {v:'p3',  l:'Automation Scripts'},
+  {v:'dsr', l:'DSR Reports'},
+  {v:'mom', l:'Minutes of Meeting'},
+  {v:'sprint',l:'Sprint Analysis'},
+];
+const AG_FILTERS = [
+  {v:'all', l:'All'},
+  {v:'p1',  l:'Test Case Pipeline'},
+  {v:'p2',  l:'Test Data Pipeline'},
+  {v:'p3',  l:'Automation Pipeline'},
+  {v:'other',l:'Use Case Agents'},
+];
+
+// ── SUPABASE FETCH ───────────────────────────────────────────
+async function fetchData() {
+  const headers = {
+    'apikey': SUPABASE_ANON,
+    'Authorization': `Bearer ${SUPABASE_ANON}`
+  };
+  const base = SUPABASE_URL + '/rest/v1';
+
+  const [ucRes, agRes, stepsRes] = await Promise.all([
+    fetch(`${base}/use_cases?select=*&order=sort_order`, {headers}),
+    fetch(`${base}/agents?select=*&order=sort_order`, {headers}),
+    fetch(`${base}/agent_steps?select=*&order=agent_id,sort_order`, {headers})
+  ]);
+
+  UC = await ucRes.json();
+  AG = await agRes.json();
+  const rawSteps = await stepsRes.json();
+
+  // Group steps by agent_id
+  STEPS = {};
+  rawSteps.forEach(s => {
+    if (!STEPS[s.agent_id]) STEPS[s.agent_id] = [];
+    STEPS[s.agent_id].push(s);
+  });
+
+  // Update tab counts
+  const confirmed = AG.filter(a => a.confirmed);
+  document.getElementById('tcAct').textContent = UC.length;
+  document.getElementById('tcAg').textContent  = confirmed.length + ' confirmed';
+
+  render();
+}
+
+// ── RENDER ───────────────────────────────────────────────────
+function render() {
+  const fr = document.getElementById('filterRow');
+  fr.innerHTML = '';
+  const filters = curTab === 'activities' ? ACT_FILTERS : AG_FILTERS;
+  filters.forEach(f => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (curFilter === f.v ? ' active' : '');
+    b.textContent = f.l;
+    b.onclick = () => { curFilter = f.v; render(); };
+    fr.appendChild(b);
+  });
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+
+  if (curTab === 'activities') {
+    const list = curFilter === 'all' ? UC : UC.filter(u => u.group_id === curFilter);
+    document.getElementById('cTitle').textContent = 'Use Cases';
+    document.getElementById('cSub').textContent = list.length + ' use case' + (list.length !== 1 ? 's' : '') + ' · GenC AI Council';
+    list.forEach((uc, i) => {
+      const s = SC[uc.status] || SC.planned;
+      const c = document.createElement('div');
+      c.className = 'card';
+      c.style.animationDelay = (i * .04) + 's';
+      c.innerHTML = `<div class="card-bar" style="background:${uc.color}"></div>
+        <div class="card-name">${uc.name}</div>
+        <div class="card-desc">${uc.short_desc}</div>
+        <div class="card-foot">
+          <div class="tags"><span class="tag ${s.cls}">${s.l}</span><span class="tag-plain">${uc.agent_ids.length} agents</span></div>
+          <span class="card-arrow">&#x2192;</span>
+        </div>`;
+      c.onclick = () => openUC(uc);
+      grid.appendChild(c);
+    });
+  } else {
+    const confirmed = AG.filter(a => a.confirmed);
+    const list = curFilter === 'all' ? confirmed : confirmed.filter(a => {
+      const grp = a.group_id;
+      if (curFilter === 'other') return grp === 'other' || grp === 'core';
+      return grp === curFilter;
+    });
+    document.getElementById('cTitle').textContent = 'Agents';
+    document.getElementById('cSub').textContent = list.length + ' agents · click any to see input, output and how it works';
+    const groupLabel = {p1:'Test Case Pipeline',p2:'Test Data Pipeline',p3:'Automation Pipeline',other:'Use Case Agent',core:'Core Orchestrator'};
+    list.forEach((ag, i) => {
+      const usedIn = UC.filter(u => u.agent_ids && u.agent_ids.includes(ag.id));
+      const c = document.createElement('div');
+      c.className = 'card';
+      c.style.animationDelay = (i * .03) + 's';
+      c.innerHTML = `<div class="card-bar" style="background:${ag.color}"></div>
+        <div style="font-size:9.5px;font-weight:700;color:${ag.color};text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;margin-top:4px">${groupLabel[ag.group_id]||''}</div>
+        <div class="card-name">${ag.name}</div>
+        <div class="card-desc">${ag.short_desc}</div>
+        <div class="card-foot">
+          <div class="tags">${usedIn.length > 1 ? `<span class="tag t-shared">Shared ×${usedIn.length}</span>` : `<span class="tag-plain">1 use case</span>`}</div>
+          <span class="card-arrow">&#x2192;</span>
+        </div>`;
+      c.onclick = () => openAG(ag);
+      grid.appendChild(c);
+    });
+  }
+}
+
+// ── DRAWER: USE CASE ─────────────────────────────────────────
+function openUC(uc) {
+  const render = () => {
+    document.getElementById('dType').textContent  = 'Use Case';
+    document.getElementById('dTitle').textContent = uc.name;
+    document.getElementById('dDesc').textContent  = uc.tagline;
+    const s = SC[uc.status] || SC.planned;
+    let b = `<div class="d-sec"><div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+      <span class="tag ${s.cls}">${s.l}</span>
+      <span class="tag-plain">${uc.agent_ids.length} agents involved</span>
+    </div></div>`;
+    b += `<div class="d-sec"><div class="d-label">What this produces</div><div class="out-box">${uc.output_desc}</div></div>`;
+    b += `<div class="d-sec"><div class="d-label">Agents in this pipeline</div><div class="uca-list">`;
+    uc.agent_ids.forEach((id, idx) => {
+      const ag = AG.find(a => a.id === id); if (!ag) return;
+      const shared = uc.shared_ids && uc.shared_ids.includes(id);
+      b += `<div class="uca" onclick="openAG(AG.find(a=>a.id==='${id}'))">
+        <div class="uca-num" style="background:${ag.color}">${idx + 1}</div>
+        <div style="flex:1">
+          <div class="uca-name">${ag.name}${shared ? ' <span class="tag t-shared" style="font-size:9px;vertical-align:middle">Shared</span>' : ''}</div>
+          <div class="uca-sd">${ag.short_desc}</div>
+        </div>
+        <span class="uca-arrow">&#x2192;</span>
+      </div>`;
+    });
+    b += `</div></div>`;
+    document.getElementById('dBody').innerHTML = b;
+  };
+  if (!navStack.length || navStack[navStack.length-1].id !== uc.id) {
+    navStack.push({id: uc.id, title: uc.name, render});
+  }
+  render(); updateDrawerNav(); openDrawer();
+}
+
+// ── DRAWER: AGENT ────────────────────────────────────────────
+function openAG(ag) {
+  if (!ag) return;
+  const render = () => {
+    const groupLabel = {core:'Core Orchestrators',p1:'Pipeline 1 — Test Case Generation',p2:'Pipeline 2 — Test Data Generation',p3:'Pipeline 3 — Automation Scripts',other:'Support Agents'};
+    document.getElementById('dType').textContent  = groupLabel[ag.group_id] || ag.group_id;
+    document.getElementById('dTitle').textContent = ag.name;
+    document.getElementById('dDesc').textContent  = ag.tagline;
+    const inp = ag.inputs  || [];
+    const out = ag.outputs || [];
+    let b = `<div class="io-grid">
+      <div class="io-box"><div class="io-box-label">Input</div>${inp.map(x=>`<div class="io-item in">${x}</div>`).join('')}</div>
+      <div class="io-box"><div class="io-box-label">Output</div>${out.map(x=>`<div class="io-item out">${x}</div>`).join('')}</div>
+    </div>`;
+    const steps = STEPS[ag.id] || [];
+    b += `<div class="d-sec"><div class="d-label">How it works</div><div class="steps">`;
+    steps.forEach(s => {
+      b += `<div class="step"><div class="step-n ${s.is_special?'sp':''}">${s.step_number}</div><div><div class="step-name">${s.step_name}</div><div class="step-desc">${s.step_desc}</div></div></div>`;
+    });
+    b += `</div></div>`;
+    const usedIn = UC.filter(u => u.agent_ids && u.agent_ids.includes(ag.id));
+    if (usedIn.length > 0) {
+      const label = usedIn.length > 1 ? `Shared across ${usedIn.length} use cases` : 'Used in one use case';
+      b += `<div class="d-sec"><div class="d-label">${label}</div><div class="used-chips">`;
+      usedIn.forEach(uc => {
+        b += `<div class="used-chip" onclick="openUC(UC.find(u=>u.id==='${uc.id}'))">${uc.name}</div>`;
+      });
+      b += `</div></div>`;
+    }
+    document.getElementById('dBody').innerHTML = b;
+  };
+  if (!navStack.length || navStack[navStack.length-1].id !== ag.id) {
+    navStack.push({id: ag.id, title: ag.name, render});
+  }
+  render(); updateDrawerNav(); openDrawer();
+}
+
+// ── NAV STACK ────────────────────────────────────────────────
+function updateDrawerNav() {
+  const backBtn = document.getElementById('dBack');
+  const breadcrumb = document.getElementById('dBreadcrumb');
+  if (navStack.length > 1) {
+    backBtn.style.display = 'flex';
+    breadcrumb.innerHTML = navStack.map((s,i) =>
+      i < navStack.length - 1
+        ? `<span onclick="navTo(${i})">${s.title}</span>`
+        : `<span style="color:var(--muted);cursor:default">${s.title}</span>`
+    ).join(' &rsaquo; ');
+  } else {
+    backBtn.style.display = 'none';
+    breadcrumb.innerHTML = '';
+  }
+}
+function navBack() {
+  if (navStack.length > 1) { navStack.pop(); navStack[navStack.length-1].render(); updateDrawerNav(); document.getElementById('drawer').scrollTop=0; }
+}
+function navTo(idx) {
+  navStack = navStack.slice(0, idx+1); navStack[navStack.length-1].render(); updateDrawerNav(); document.getElementById('drawer').scrollTop=0;
+}
+function openDrawer()  { document.getElementById('overlay').classList.add('open'); document.body.style.overflow='hidden'; document.getElementById('drawer').scrollTop=0; }
+function closeDrawer() { document.getElementById('overlay').classList.remove('open'); document.body.style.overflow=''; navStack=[]; }
+function maybeClose(e) { if(e.target===document.getElementById('overlay')) closeDrawer(); }
+function switchTab(t, btn) { curTab=t; curFilter='all'; document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&t==='activities')||(i===1&&t==='agents'))); render(); }
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeDrawer(); });
+
+// ── INIT ─────────────────────────────────────────────────────
+fetchData().catch(err => {
+  document.getElementById('grid').innerHTML = `<div class="loading" style="color:var(--red)">⚠ Could not load data. Check your config.js credentials.</div>`;
+  console.error(err);
+});
+</script>
+</body>
+</html>
