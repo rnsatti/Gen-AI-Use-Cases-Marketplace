@@ -4,4 +4,4 @@
 // ============================================================
 
 const SUPABASE_URL  = 'https://drverzdjbquldwqpcxdp.supabase.co';
-const SUPABASE_ANON = 'drverzdjbquldwqpcxdp';
+const SUPABASE_ANON = 'sb_publishable_PLAfW-nIIhwBBeBizjutYg_spiWmZap';
